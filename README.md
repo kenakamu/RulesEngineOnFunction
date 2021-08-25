@@ -2,9 +2,34 @@
 
 This repository contains a sample Azure Functions application for [RulesEngine](https://github.com/microsoft/RulesEngine). The rule definition is stored in Cosmos DB.
 
+## What is RulesEngine
+
+You can use RulesEngine to compare input data against pre-defined rules, both defined by using JSON format, to identify if the input data meet the rule or not. It supports complex rules definition by supporting hierarchy and lambda expressin in C# to compare data. 
+
+## Why you may want to host it on Azure Function?
+
+RulesEngine is provided as NuGet packages which you can include in your project. In cloud native world, its common to separate services into microservices which responsible on particular tasks. Typically, these services provide endpoint which other services can call-in. 
+
+Azure Function is great choice to host a service as webservice which is responsibile this purpose. You can host Azure Functions in Azure Subscription, or you can deploy it to kubernates. See [Azure Functions on Kubernetes with KEAD](https://docs.microsoft.com/en-us/azure/azure-functions/functions-kubernetes-keda) for more detail.
+
+## Why you may want to store rules definition in Cosmos DB
+
+Actually, you can host rules definition anywhere, even local to the Azure Function. It's depends on:
+
+- how many rules you have
+- how frequent you update them
+- how fast the rules have to be reflected
+
+Azure Functions has native Cosmos DB binding for trigger/innput/output which is good match for managing and updating rules definitions.
+
 # Architecture
 
 ![](./assets/rulesenginearchitecture.png)
+
+- Client sends input data as JSON
+- Azure Function host RulesEngine and process input data
+- Rules definitions are stored in Cosmos DB
+- Cosmos DB notifies any change to the rules to Azure Functions near real-time by using Cosmos DB change feed
 
 # Required Azure Service
 
@@ -39,15 +64,15 @@ Update CosmosDBConnectionString.
 }
 ```
 
-# Read Rules Definition
+# Read Rule Definitions
 
 1. When the function app started, it reads all rule definitions from CosmosDB in startup and store them in memory.
 
 1. When rule(s) changes in Cosmos DB, the change is propagated to the function via Cosmos DB Change feed, then the function retrieves rules definition(s) to update rules in memory.
 
-# Cosmos DB and Change Feed limitation
+## Cosmos DB and Change Feed limitation
 
-## Id property and schema limitation in Cosmos DB
+### Id property and schema limitation in Cosmos DB
 
 As each documents in Cosmos DB requires "id" property and cannot store array as top level, I need to wrap the RulesEngine rule definition by using own class. See [Workflow.cs](./RulesEngineOnFunction/Models/Workflow.cs).
 
