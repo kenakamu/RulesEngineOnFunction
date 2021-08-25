@@ -41,30 +41,7 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 - This sample expects "rulesDb" database and "rulesEngineWorkflows" and "leases" container with "/id" as partition.
 - leases container is used for [Cosmos DB ChangeFeed](https://docs.microsoft.com/en-us/azure/cosmos-db/change-feed).
 
-# How to run in local
-
-Create local.settings.json and add following config.
-Update CosmosDBConnectionString.
-
-```json
-{
-  "Values": {
-    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "CosmosDBConnectionString": "",
-    "DatabaseId": "rulesDb",
-    "ContainerId": "rulesEngineWorkflows"
-  },
-  "Host": {
-    "LocalHttpPort": 7071,
-    "CORS": "*",
-    "CORSCredentials": false
-  },
-  "IsEncrypted": false
-}
-```
-
-# Read Rule Definitions
+# Reading Rule Definitions
 
 1. When the function app started, it reads all rule definitions from CosmosDB in startup and store them in memory.
 
@@ -77,6 +54,8 @@ Update CosmosDBConnectionString.
 As each documents in Cosmos DB requires "id" property and cannot store array as top level, I need to wrap the RulesEngine rule definition by using own class. See [Workflow.cs](./RulesEngineOnFunction/Models/Workflow.cs).
 
 I use "id" as workflow name.
+
+# Example rule definition
 
 Example of rule definition in Cosmos DB. Please compare with [Discount.json in original repo](https://github.com/microsoft/RulesEngine/blob/main/demo/DemoApp/Workflows/Discount.json)
 
@@ -179,6 +158,60 @@ Example of rule definition in Cosmos DB. Please compare with [Discount.json in o
 ## Change Feed
 
 Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, when the model is incompatibile with the Framework, it failes to bind the data as input. Thus I use basic class (which only conatins id) to receive the change, then retrieve the document on purpose.
+
+# How to run in local
+
+Once you provision Cosmos DB and create rules, you can try the function in local (or on Azure).
+1. Create local.settings.json and add following config.
+1. Update CosmosDBConnectionString.
+
+    ```json
+    {
+    "Values": {
+        "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+        "CosmosDBConnectionString": "",
+        "DatabaseId": "rulesDb",
+        "ContainerId": "rulesEngineWorkflows"
+    },
+    "Host": {
+        "LocalHttpPort": 7071,
+        "CORS": "*",
+        "CORSCredentials": false
+    },
+    "IsEncrypted": false
+    }
+    ```
+1. Run the function in RulesEngineOnFunction folder.
+    ```shell
+    func start
+    ```
+1. Use any tool to send Post message to endpoint. This sample expect data format defined in [InputRule.cs](./RulesEngineOnFunction/Models/InputRule.cs)
+
+    POST:  http://localhost:7071/api/ExecuteRule
+    Body:
+    ```json
+    {
+        "workflowName": "Discount",
+        "basicInfo": {
+            "name": "hello",
+            "email": "abcy@xyz.com",
+            "creditHistory": "good",
+            "country": "canada",
+            "loyalityFactor": 3,
+            "totalPurchasesToDate": 10000
+        },
+        "orderInfo": {
+            "totalOrders": 5,
+            "recurringItems": 2
+        },
+        "telemetryInfo": {
+            "noOfVisitsPerMonth": 10,
+            "percentageOfBuyingToVisit": 15
+        }
+    }
+    ```
+1. Change input data or rules in Cosmos DB to see if you can get different results.
 
 # Feedback
 
