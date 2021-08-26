@@ -1,6 +1,6 @@
 # Introduction
 
-This repository contains a sample Azure Functions application for [RulesEngine](https://github.com/microsoft/RulesEngine). The rule definition is stored in Cosmos DB.
+This repository contains a sample Azure Functions application for [RulesEngine](https://github.com/microsoft/RulesEngine). The rule definitions are stored in Cosmos DB.
 
 ## What is RulesEngine
 
