@@ -49,6 +49,13 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 
 ## Cosmos DB and Change Feed limitation
 
+### Sync between Functions
+
+When you scale-out the Azure Function to multiple instances, only one instance receives the change feed, thus other instances won't get latest update. If you need to scale out function and solve the issue, there are two approaces.
+
+- Use polling instead of Cosmos DB ChangeFeed
+- Use other approach to sync data. See [Distributed in-memory cache using Azure Functions Sample](https://github.com/hannesne/functions-cache-sample) for starting point.
+
 ### Id property and schema limitation in Cosmos DB
 
 As each documents in Cosmos DB requires "id" property and cannot store array as top level, I need to wrap the RulesEngine rule definition by using own class. See [Workflow.cs](./RulesEngineOnFunction/Models/Workflow.cs).
