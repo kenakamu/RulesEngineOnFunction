@@ -53,7 +53,7 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 
 When you scale-out the Azure Function to multiple instances, only one instance receives the change feed, thus other instances won't get latest update. If you need to scale out function and solve the issue, there are two approaces.
 
-- Use ChangeFeed Processor to poll changes instead of Cosmos DB ChangeFeed binding. See [Change feed processor in Azure Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/sql/change-feed-processor#implementing-the-change-feed-processor) for more detail how to use Change Feed Processor.
+- Use pull model instead of Cosmos DB ChangeFeed binding. See [Change feed pull model in Azure Cosmos DB](https://docs.microsoft.com/en-us/azure/cosmos-db/sql/change-feed-pull-model) for more detail.
 - Use other approach to sync data. See [Distributed in-memory cache using Azure Functions Sample](https://github.com/hannesne/functions-cache-sample) for starting point.
 
 ### Id property and schema limitation in Cosmos DB
