@@ -29,7 +29,7 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 - Client sends input data as JSON
 - Azure Function host RulesEngine and process input data
 - Rules definitions are stored in Cosmos DB
-- Cosmos DB notifies any change to the rules to Azure Functions near real-time by using Cosmos DB change feed
+- Use Polling to Cosmos DB to get any change of rules and sync to Azure Functions
 
 # Required Azure Service
 
