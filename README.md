@@ -151,7 +151,7 @@ Example of rule definition in Cosmos DB. Please compare with [Discount.json in o
 
 ## Change Feed
 
-Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, only one instance of Azure Functions when it scaled-out, therefore you may encounter rules in memory inconsistency between functions. That's why this branch uses polling strategy so that each instance independently poll Cosmos DB to get latest changes.
+Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, only one instance of Azure Functions receives the notification when it scaled-out, therefore you may encounter rules in memory inconsistency between functions. That's why this branch uses polling strategy so that each instance independently poll Cosmos DB to get latest changes.
 
 It depends on how frequent it polls, you still have some time window when each function instances may contain different set up rules.
 
