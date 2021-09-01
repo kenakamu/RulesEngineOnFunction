@@ -47,6 +47,8 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 
 1. Then it uses timer tigger to periodically checks if there is any change since last check. When it finds any change, then the function updates rules in memory.
 
+You can change polling interval by change TimerTrigger attribute in RulesEngineOnFunction.cs. You can also make it configurable. See [Timer trigger for Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-bindings-timer) for more detail.
+
 # Example rule definition
 
 Example of rule definition in Cosmos DB. Please compare with [Discount.json in original repo](https://github.com/microsoft/RulesEngine/blob/main/demo/DemoApp/Workflows/Discount.json)
@@ -151,7 +153,7 @@ Example of rule definition in Cosmos DB. Please compare with [Discount.json in o
 
 Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, only one instance of Azure Functions when it scaled-out, therefore you may encounter rules in memory inconsistency between functions. That's why this branch uses polling strategy so that each instance independently poll Cosmos DB to get latest changes.
 
-It depends on how frequent it polls, you still have some time window when each function instance may contain different set up rules.
+It depends on how frequent it polls, you still have some time window when each function instances may contain different set up rules.
 
 - If you only run single instance and want to use Cosmos DB ChangeFeed binding, see the main branch of this repository.
 - If you are looking for more real-time synchronization between Azure Function instances, see [Distributed in-memory cache using Azure Functions Sample](https://github.com/hannesne/functions-cache-sample) as starting point.
