@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
+using RulesEngineOnFunction.Models;
 
 namespace RulesEngineOnFunction.Repositories
 {
@@ -13,6 +14,7 @@ namespace RulesEngineOnFunction.Repositories
     {
         private CosmosClient client;
         private Container workflowContainer;
+        private string continuationToken = default(string);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CosmosRepository"/> class.
@@ -27,42 +29,34 @@ namespace RulesEngineOnFunction.Repositories
         }
 
         /// <summary>
-        /// Get RulesEngine workflow by id.
+        /// Get changed item since specified time.
         /// </summary>
-        /// <param name="id">Cosmos DB Id.</param>
-        /// <returns>Workflow contents.</returns>
-        public async Task<dynamic> GetWorkflowByIdAsync(string id)
+        /// <returns>List of workflows.</returns>
+        public async Task<List<dynamic>> GetChangedWorkflowsAsync()
         {
-            Console.WriteLine($"read cosmosdb to get {id}");
-            QueryDefinition query = new QueryDefinition(
-                "SELECT * FROM c WHERE c.id = @id")
-                .WithParameter("@id", id);
-
-            FeedIterator<dynamic> policyIterator = this.workflowContainer.GetItemQueryIterator<dynamic>(query);
-
-            FeedResponse<dynamic> response = await policyIterator.ReadNextAsync().ConfigureAwait(false);
-            return response.Select(x => x.rule).FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Get all RulesEngine workflows.
-        /// </summary>
-        /// <returns>List of Workflow contents.</returns>
-        public async Task<List<dynamic>> GetAllWorkflowsAsync()
-        {
-            List<dynamic> policies = new ();
-            Console.WriteLine("read cosmosdb to get all workflows");
-            QueryDefinition query = new QueryDefinition("SELECT * FROM c");
-
-            FeedIterator<dynamic> policyIterator = this.workflowContainer.GetItemQueryIterator<dynamic>(query);
-
-            while (policyIterator.HasMoreResults)
+            FeedIterator<Workflow> changedFeedIterator = this.workflowContainer.GetChangeFeedIterator<Workflow>(
+                this.continuationToken == null ? ChangeFeedStartFrom.Beginning() : ChangeFeedStartFrom.ContinuationToken(this.continuationToken),
+                ChangeFeedMode.Incremental);
+            List<dynamic> results = new ();
+            while (changedFeedIterator.HasMoreResults)
             {
-                FeedResponse<dynamic> response = await policyIterator.ReadNextAsync().ConfigureAwait(false);
-                policies.AddRange(response);
+                FeedResponse<Workflow> response = await changedFeedIterator.ReadNextAsync();
+
+                if (response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                {
+                    this.continuationToken = response.ContinuationToken;
+                    break;
+                }
+                else
+                {
+                    foreach (Workflow workflow in response)
+                    {
+                        results.Add(workflow);
+                    }
+                }
             }
 
-            return policies.Select(x => x.rule).ToList();
+            return results.Select(x => x.Rule).ToList();
         }
     }
 }

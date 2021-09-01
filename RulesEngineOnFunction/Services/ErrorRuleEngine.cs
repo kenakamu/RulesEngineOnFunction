@@ -35,7 +35,7 @@ namespace RulesEngineOnFunction.Services
         /// <returns>Task.</returns>
         public async Task Init()
         {
-            List<dynamic> workflows = await this.repository.GetAllWorkflowsAsync().ConfigureAwait(false);
+            List<dynamic> workflows = await this.repository.GetChangedWorkflowsAsync().ConfigureAwait(false);
             dynamic workflowRules = JsonConvert.DeserializeObject<List<WorkflowRules>>(JsonConvert.SerializeObject(workflows));
             this.ruleEngine = new RulesEngine.RulesEngine(workflowRules.ToArray());
         }
@@ -82,16 +82,20 @@ namespace RulesEngineOnFunction.Services
         }
 
         /// <summary>
-        /// Update a RulesEngine Workflow by workflow id.
+        /// Update a RulesEngine Workflow by checking latest change.
         /// </summary>
-        /// <param name="id">Workflow id.</param>
         /// <returns>Task.</returns>
-        public async Task UpdateRuleAsync(string id)
+        public async Task UpdateRulesAsync()
         {
-            dynamic workflow = await this.repository.GetWorkflowByIdAsync(id).ConfigureAwait(false);
-            dynamic workflowRule = JsonConvert.DeserializeObject<WorkflowRules>(JsonConvert.SerializeObject(workflow));
-            this.ruleEngine.RemoveWorkflow(new string[] { id });
-            this.ruleEngine.AddWorkflow(new WorkflowRules[] { workflowRule });
+            // Get the latest changes from database.
+            List<dynamic> changedWorkflows = await this.repository.GetChangedWorkflowsAsync();
+
+            foreach (dynamic workflow in changedWorkflows)
+            {
+                dynamic workflowRule = JsonConvert.DeserializeObject<WorkflowRules>(JsonConvert.SerializeObject(workflow));
+                this.ruleEngine.RemoveWorkflow(new string[] { workflowRule.WorkflowName });
+                this.ruleEngine.AddWorkflow(new WorkflowRules[] { workflowRule });
+            }
         }
     }
 }

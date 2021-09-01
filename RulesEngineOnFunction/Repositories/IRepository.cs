@@ -9,16 +9,9 @@ namespace RulesEngineOnFunction.Repositories
     public interface IRepository
     {
         /// <summary>
-        /// Get RulesEngine workflow by name.
+        /// Get changed item since specified time.
         /// </summary>
-        /// <param name="id">Cosmos DB Id.</param>
-        /// <returns>Workflow contents.</returns>
-        Task<dynamic> GetWorkflowByIdAsync(string id);
-
-        /// <summary>
-        /// Get all RulesEngine workflows.
-        /// </summary>
-        /// <returns>List of Workflow contents.</returns>
-        Task<List<dynamic>> GetAllWorkflowsAsync();
+        /// <returns>List of workflows.</returns>
+        public Task<List<dynamic>> GetChangedWorkflowsAsync();
     }
 }

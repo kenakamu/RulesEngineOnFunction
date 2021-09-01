@@ -25,10 +25,9 @@ namespace RulesEngineOnFunction.Services
         Task<List<string>> ExecuteRulesAsync(InputRule inputRule, ILogger logger);
 
         /// <summary>
-        /// Update a RulesEngine Workflow by workflow id.
+        /// Update a RulesEngine Workflow by checking latest change.
         /// </summary>
-        /// <param name="id">Workflow id.</param>
         /// <returns>Task.</returns>
-        public Task UpdateRuleAsync(string id);
+        public Task UpdateRulesAsync();
     }
 }

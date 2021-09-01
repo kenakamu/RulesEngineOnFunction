@@ -1,6 +1,6 @@
 # Introduction
 
-This repository contains a sample Azure Functions application for [RulesEngine](https://github.com/microsoft/RulesEngine). The rule definitions are stored in Cosmos DB.
+This repository contains a sample Azure Functions application for [RulesEngine](https://github.com/microsoft/RulesEngine). The rule definitions are stored in Cosmos DB. This branch uses polling model to get latest change from Cosmos DB.
 
 ## What is RulesEngine
 
@@ -45,15 +45,7 @@ Azure Functions has native Cosmos DB binding for trigger/innput/output which is 
 
 1. When the function app started, it reads all rule definitions from CosmosDB in startup and store them in memory.
 
-1. When rule(s) changes in Cosmos DB, the change is propagated to the function via Cosmos DB Change feed, then the function retrieves rules definition(s) to update rules in memory.
-
-## Cosmos DB and Change Feed limitation
-
-### Id property and schema limitation in Cosmos DB
-
-As each documents in Cosmos DB requires "id" property and cannot store array as top level, I need to wrap the RulesEngine rule definition by using own class. See [Workflow.cs](./RulesEngineOnFunction/Models/Workflow.cs).
-
-I use "id" as workflow name.
+1. Then it uses timer tigger to periodically checks if there is any change since last check. When it finds any change, then the function updates rules in memory.
 
 # Example rule definition
 
@@ -157,7 +149,12 @@ Example of rule definition in Cosmos DB. Please compare with [Discount.json in o
 
 ## Change Feed
 
-Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, when the model is incompatibile with the Framework, it failes to bind the data as input. Thus I use basic class (which only conatins id) to receive the change, then retrieve the document on purpose.
+Cosmos DB Change Feed gives changed content with Change Feed notification, thus we usually don't need to query the database to get latest document. However, only one instance of Azure Functions when it scaled-out, therefore you may encounter rules in memory inconsistency between functions. That's why this branch uses polling strategy so that each instance independently poll Cosmos DB to get latest changes.
+
+It depends on how frequent it polls, you still have some time window when each function instance may contain different set up rules.
+
+- If you only run single instance and want to use Cosmos DB ChangeFeed binding, see the main branch of this repository.
+- If you are looking for more real-time synchronization between Azure Function instances, see [Distributed in-memory cache using Azure Functions Sample](https://github.com/hannesne/functions-cache-sample) as starting point.
 
 # How to run in local
 
@@ -212,6 +209,12 @@ Once you provision Cosmos DB and create rules, you can try the function in local
     }
     ```
 1. Change input data or rules in Cosmos DB to see if you can get different results.
+
+1. If you want to try multiple instances test, you can copy the code and run it by specifying different ports.
+
+    ```shell
+    func start --port <port number>
+    ```
 
 # Feedback
 

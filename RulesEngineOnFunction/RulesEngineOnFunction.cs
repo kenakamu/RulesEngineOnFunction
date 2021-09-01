@@ -7,7 +7,6 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using RulesEngineOnFunction.Models;
-using RulesEngineOnFunction.Repositories;
 using RulesEngineOnFunction.Services;
 
 namespace RulesEngineOnFunction
@@ -31,7 +30,7 @@ namespace RulesEngineOnFunction
         /// <summary>
         /// Execute RulesEngineOnFunction.
         /// </summary>
-        /// <param name="req">incoming telemetry</param>
+        /// <param name="req">Incoming telemetry.</param>
         /// <param name="executionContext">FunctionContext.</param>
         /// <returns>List of DetectedErrorRuleOutput.</returns>
         [Function("ExecuteRule")]
@@ -64,28 +63,17 @@ namespace RulesEngineOnFunction
         }
 
         /// <summary>
-        /// Update RulesEngine workflow via Cosmos DB Change feed.
+        /// Check Cosmos DB update periodically (each 10 seconds) and apply the changes.
         /// </summary>
-        /// <param name="input">Updated/Created RulesEngine workflow.</param>
-        /// <param name="context">FunctionContext.</param>
+        /// <param name="timer">Time settings</param>
+        /// <param name="executionContext">FunctionContext</param>
         /// <returns>Task.</returns>
-        [Function("UpdateRule")]
-        public async Task ChangeFeed(
-            [CosmosDBTrigger(
-            databaseName: "rulesDb",
-            collectionName: "rulesEngineWorkflows",
-            ConnectionStringSetting = "CosmosDBConnectionString")] IReadOnlyList<CosmosEntity> input,
-            FunctionContext context)
+        [Function("CheckRuleChange")]
+        public async Task CheckRuleChange(
+            [TimerTrigger("*/10 * * * * *")]TimerInfo timer, FunctionContext executionContext)
         {
-            var logger = context.GetLogger(nameof(RulesEngineOnFunction));
-            if (input != null && input.Count > 0)
-            {
-                logger.LogInformation("Documents modified: " + input.Count);
-                foreach (CosmosEntity cosmosEntity in input)
-                {
-                    await this.errorRuleEngine.UpdateRuleAsync(cosmosEntity.Id);
-                }
-            }
+            var logger = executionContext.GetLogger(nameof(RulesEngineOnFunction));
+            await this.errorRuleEngine.UpdateRulesAsync();
         }
     }
 }
